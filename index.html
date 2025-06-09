@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle da Biblioteca</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans">
+
+    <div class="container mx-auto p-8">
+        <h1 class="text-4xl font-bold mb-8 text-center text-cyan-400">Banco da Biblioteca</h1>
+
+        <div class="bg-slate-800 p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-white">Adicionar Novo Livro</h2>
+            <form id="form-novo-livro" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="text" id="titulo" placeholder="Título do Livro" required class="bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <input type="number" id="ano" placeholder="Ano de Publicação" class="bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <input type="number" id="autor_id" placeholder="ID do Autor" required class="bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <input type="number" id="editora_id" placeholder="ID da Editora" required class="bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <input type="text" id="isbn" placeholder="ISBN (Opcional)" class="bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 col-span-1 md:col-span-2">
+                <button type="submit" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-md transition-colors col-span-1 md:col-span-3">Salvar Livro</button>
+            </form>
+        </div>
+
+        <div class="bg-slate-800 rounded-lg shadow-lg overflow-hidden">
+            <table class="min-w-full">
+                <thead class="bg-slate-700">
+                    <tr>
+                        <th class="py-3 px-4 text-left">ID</th>
+                        <th class="py-3 px-4 text-left">Título</th>
+                        <th class="py-3 px-4 text-left">Autor</th>
+                        <th class="py-3 px-4 text-left">Ano</th>
+                        <th class="py-3 px-4 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-livros" class="divide-y divide-slate-600">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO (Inicialmente escondido) -->
+    <div id="modal-edicao" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-slate-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+            <h2 class="text-2xl font-semibold mb-4">Atualizar Livro</h2>
+            <form id="form-edicao">
+                <input type="hidden" id="edit-id">
+                <div class="mb-4">
+                    <label for="edit-titulo" class="block mb-1">Título</label>
+                    <input type="text" id="edit-titulo" required class="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                </div>
+                <div class="mb-4">
+                    <label for="edit-ano" class="block mb-1">Ano</label>
+                    <input type="number" id="edit-ano" class="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                </div>
+                <!-- CAMPO DE EDIÇÃO DO ISBN ADICIONADO -->
+                <div class="mb-4">
+                    <label for="edit-isbn" class="block mb-1">ISBN</label>
+                    <input type="text" id="edit-isbn" class="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" onclick="fecharModalEdicao()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">Cancelar</button>
+                    <button type="submit" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-md">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        const API_URL = 'http://localhost:3000/livros';
+        const form = document.getElementById('form-novo-livro');
+        const tabelaCorpo = document.getElementById('tabela-livros');
+        const modal = document.getElementById('modal-edicao');
+        const formEdicao = document.getElementById('form-edicao');
+
+        async function buscarLivros() {
+            try {
+                const response = await fetch(API_URL);
+                const livros = await response.json();
+                tabelaCorpo.innerHTML = '';
+                if (livros.length === 0) {
+                    tabelaCorpo.innerHTML = '<tr><td colspan="5" class="text-center py-4">Nenhum livro encontrado.</td></tr>';
+                    return;
+                }
+                livros.forEach(livro => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-700 transition-colors';
+                    tr.innerHTML = `
+                        <td class="py-3 px-4">${livro.id}</td>
+                        <td class="py-3 px-4 font-semibold">${livro.titulo}</td>
+                        <td class="py-3 px-4">${livro.autor}</td>
+                        <td class="py-3 px-4">${livro.ano_publicacao}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="abrirModalEdicao(${livro.id}, '${livro.titulo}', ${livro.ano_publicacao}, '${livro.isbn}')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-md text-sm mr-2">Atualizar</button>
+                            <button onclick="excluirLivro(${livro.id})" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md text-sm">Excluir</button>
+                        </td>
+                    `;
+                    tabelaCorpo.appendChild(tr);
+                });
+            } catch (error) { console.error('Erro ao buscar livros:', error); }
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const novoLivro = {
+                titulo: document.getElementById('titulo').value, ano_publicacao: parseInt(document.getElementById('ano').value), isbn: document.getElementById('isbn').value, autor_id: parseInt(document.getElementById('autor_id').value), editora_id: parseInt(document.getElementById('editora_id').value),
+            };
+            await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(novoLivro) });
+            form.reset();
+            buscarLivros();
+        });
+
+        async function excluirLivro(id) {
+            if (!confirm(`Tem certeza que deseja excluir o livro com ID ${id}?`)) return;
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            buscarLivros();
+        }
+        
+        // --- FUNÇÕES DE EDIÇÃO (ATUALIZADAS) ---
+        function abrirModalEdicao(id, titulo, ano, isbn) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-titulo').value = titulo;
+            document.getElementById('edit-ano').value = ano;
+            // Popula o novo campo ISBN
+            document.getElementById('edit-isbn').value = isbn;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function fecharModalEdicao() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        formEdicao.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            // Adiciona o ISBN ao objeto a ser enviado
+            const livroAtualizado = {
+                titulo: document.getElementById('edit-titulo').value,
+                ano_publicacao: parseInt(document.getElementById('edit-ano').value),
+                isbn: document.getElementById('edit-isbn').value
+            };
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(livroAtualizado)
+            });
+            fecharModalEdicao();
+            buscarLivros();
+        });
+
+        document.addEventListener('DOMContentLoaded', buscarLivros);
+    </script>
+</body>
+</html>
