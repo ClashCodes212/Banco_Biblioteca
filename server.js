@@ -1,33 +1,20 @@
-// =================================================================
-//          API COMPLETA - SISTEMA DE CONTROLE DE BIBLIOTECA (COM CORS)
-// =================================================================
-
-// 1. IMPORTAR OS PACOTES NECESSÁRIOS
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 
-// 2. INICIAR A APLICAÇÃO EXPRESS
 const app = express();
 
-// 3. CONFIGURAR MIDDLEWARES
 app.use(cors());
 app.use(express.json());
 
-// 4. CONFIGURAR A CONEXÃO COM O BANCO DE DADOS
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'biblioteca_db',
-  password: '12233rvb', // <-- LEMBRE-SE DE COLOCAR SUA SENHA AQUI
+  password: '12233rvb',
   port: 5432,
 });
 
-// =================================================================
-//                      ROTAS DO CRUD PARA /LIVROS
-// =================================================================
-
-// [CREATE]
 app.post('/livros', async (req, res) => {
   const { titulo, ano_publicacao, isbn, autor_id, editora_id } = req.body;
   try {
@@ -44,7 +31,6 @@ app.post('/livros', async (req, res) => {
   }
 });
 
-// [READ]
 app.get('/livros', async (req, res) => {
   try {
     const query = `
@@ -64,10 +50,8 @@ app.get('/livros', async (req, res) => {
   }
 });
 
-// [UPDATE] - Rota ATUALIZADA para incluir o ISBN
 app.put('/livros/:id', async (req, res) => {
     const { id } = req.params;
-    // Agora também pegamos o ISBN do corpo da requisição
     const { titulo, ano_publicacao, isbn } = req.body;
     try {
         const query = `
@@ -75,7 +59,6 @@ app.put('/livros/:id', async (req, res) => {
             SET titulo = $1, ano_publicacao = $2, isbn = $3
             WHERE id = $4
             RETURNING *`;
-        // Adicionamos o ISBN aos valores a serem atualizados
         const values = [titulo, ano_publicacao, isbn, id];
         const livroAtualizado = await pool.query(query, values);
         if (livroAtualizado.rows.length === 0) {
@@ -88,7 +71,6 @@ app.put('/livros/:id', async (req, res) => {
     }
 });
 
-// [DELETE]
 app.delete('/livros/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -103,9 +85,6 @@ app.delete('/livros/:id', async (req, res) => {
     }
 });
 
-// =================================================================
-//                      INICIAR O SERVIDOR
-// =================================================================
 const PORTA = 3000;
 app.listen(PORTA, () => {
   console.log(`Servidor rodando na porta ${PORTA}.`);
