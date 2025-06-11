@@ -40,7 +40,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE EDIÇÃO (Inicialmente escondido) -->
     <div id="modal-edicao" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
         <div class="bg-slate-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
             <h2 class="text-2xl font-semibold mb-4">Atualizar Livro</h2>
@@ -54,7 +53,6 @@
                     <label for="edit-ano" class="block mb-1">Ano</label>
                     <input type="number" id="edit-ano" class="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
                 </div>
-                <!-- CAMPO DE EDIÇÃO DO ISBN ADICIONADO -->
                 <div class="mb-4">
                     <label for="edit-isbn" class="block mb-1">ISBN</label>
                     <input type="text" id="edit-isbn" class="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400">
@@ -118,12 +116,10 @@
             buscarLivros();
         }
         
-        // --- FUNÇÕES DE EDIÇÃO (ATUALIZADAS) ---
         function abrirModalEdicao(id, titulo, ano, isbn) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-titulo').value = titulo;
             document.getElementById('edit-ano').value = ano;
-            // Popula o novo campo ISBN
             document.getElementById('edit-isbn').value = isbn;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -137,7 +133,6 @@
         formEdicao.addEventListener('submit', async (event) => {
             event.preventDefault();
             const id = document.getElementById('edit-id').value;
-            // Adiciona o ISBN ao objeto a ser enviado
             const livroAtualizado = {
                 titulo: document.getElementById('edit-titulo').value,
                 ano_publicacao: parseInt(document.getElementById('edit-ano').value),
